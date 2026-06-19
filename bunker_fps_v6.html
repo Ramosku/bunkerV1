@@ -1,0 +1,1163 @@
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000}
+#gc{width:100%;height:100vh;position:relative;background:#000;overflow:hidden;font-family:'Courier New',monospace;user-select:none;touch-action:none}
+#screen-settings{overflow-y:auto;align-items:flex-start;padding:10px 0}
+#cv{display:block;width:100%;height:100%;position:absolute;top:0;left:0}
+/* ── SCREENS ── */
+.screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;z-index:30}
+#screen-menu{background:rgba(0,0,0,.96)}
+#screen-settings{background:rgba(0,0,0,.96);display:none}
+#screen-puzzle{background:rgba(0,0,0,.75);display:none}
+#screen-win{background:rgba(0,0,0,.88);display:none}
+#screen-lose{background:rgba(0,0,0,.9);display:none}
+.panel{background:rgba(0,12,0,.98);border:1px solid rgba(0,255,0,.25);border-radius:12px;padding:18px 24px;max-width:400px;width:92%;color:#0f0;text-align:center}
+.panel h1{font-size:22px;letter-spacing:4px;margin-bottom:4px;color:#0f0}
+.panel h2{font-size:14px;letter-spacing:3px;margin-bottom:20px;color:rgba(0,255,0,.45)}
+.panel h3{font-size:13px;letter-spacing:2px;margin-bottom:16px;color:#0f0}
+.divider{border:none;border-top:1px solid rgba(0,255,0,.15);margin:10px 0}
+.btn{background:transparent;border:1px solid rgba(0,255,0,.35);color:#0f0;padding:10px 0;border-radius:6px;cursor:pointer;font-family:'Courier New',monospace;font-size:13px;letter-spacing:1px;width:100%;margin:5px 0;transition:background .2s,border-color .2s;display:block}
+.btn:hover{background:rgba(0,255,0,.1);border-color:rgba(0,255,0,.6)}
+.btn-sm{width:auto;padding:7px 16px;font-size:12px;margin:3px}
+.btn-back{border-color:rgba(0,255,0,.2);color:rgba(0,255,0,.5);font-size:11px;padding:7px 0}
+.btn-back:hover{background:rgba(0,255,0,.05);border-color:rgba(0,255,0,.4);color:#0f0}
+/* sliders */
+.vol-row{display:flex;align-items:center;gap:10px;margin:6px 0}
+.vol-row label{font-size:12px;color:rgba(0,255,0,.6);width:90px;text-align:right;flex-shrink:0}
+.vol-row input[type=range]{flex:1;accent-color:#0f0;height:4px;cursor:pointer}
+.vol-row span{font-size:12px;color:#0f0;width:36px;text-align:left}
+/* controls table */
+.ctrl-table{width:100%;font-size:12px;border-collapse:collapse;margin:6px 0 12px}
+.ctrl-table td{padding:3px 8px;border-bottom:1px solid rgba(0,255,0,.08);text-align:left}
+.ctrl-table td:first-child{color:rgba(0,255,0,.5);width:50%}
+.ctrl-table td:last-child{color:#0f0;font-weight:bold}
+/* HUD */
+#hud{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;color:#0f0;z-index:5;display:none}
+#top-hud{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 14px;background:linear-gradient(to bottom,rgba(0,0,0,.8),transparent)}
+#bot-hud{position:absolute;bottom:0;left:0;right:0;padding:10px 14px;background:linear-gradient(to top,rgba(0,0,0,.8),transparent);display:flex;justify-content:space-between;align-items:flex-end}
+.badge{background:rgba(0,0,0,.7);border:1px solid rgba(0,255,0,.2);padding:3px 10px;border-radius:5px;font-size:12px}
+#crosshair{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:22px;height:22px;pointer-events:none;display:none}
+#crosshair::before,#crosshair::after{content:'';position:absolute;background:rgba(0,255,0,.75)}
+#crosshair::before{width:2px;height:22px;left:10px;top:0}
+#crosshair::after{width:22px;height:2px;top:10px;left:0}
+#stam-bar{width:110px;height:5px;background:#111;border:1px solid rgba(0,255,0,.2);border-radius:3px;overflow:hidden;margin-top:4px}
+#stam-fill{height:100%;background:#0f0;border-radius:3px}
+#interact-hint{position:absolute;top:56%;left:50%;transform:translateX(-50%);color:#ff0;font-size:12px;background:rgba(0,0,0,.7);padding:3px 10px;border-radius:4px;display:none;pointer-events:none;z-index:6}
+#hearts-lbl{font-size:16px;letter-spacing:3px}
+#dmg-flash{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,0,0,.35);opacity:0;pointer-events:none;transition:opacity .15s;z-index:7}
+#muzzle-flash{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.3);width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,#fff,#ff0 40%,#f80 62%,transparent 72%);opacity:0;pointer-events:none;z-index:8}
+/* puzzle screen */
+#puzzle-box{background:rgba(0,10,0,.98);border:1px solid rgba(0,255,0,.3);border-radius:10px;padding:24px 28px;max-width:390px;width:92%;color:#0f0;text-align:center;line-height:1.7;font-size:13px}
+#puzzle-box h2{font-size:14px;margin-bottom:10px;letter-spacing:2px}
+#puzzle-box p{color:#0c0;margin-bottom:10px}
+.opt-btn{display:block;width:100%;margin:5px 0;text-align:left;padding:9px 14px}
+.opt-btn:hover{background:rgba(0,255,0,.15);border-color:rgba(0,255,0,.6)}
+/* ── PAUSE SCREEN ── */
+#screen-pause{background:rgba(0,0,0,.85);display:none}
+/* ── MOBILE CONTROLS ── */
+#mobile-controls{display:none;position:absolute;bottom:0;left:0;right:0;height:160px;z-index:10;pointer-events:none}
+#joystick-zone{position:absolute;bottom:16px;left:16px;width:130px;height:130px;pointer-events:all}
+#joystick-base{width:110px;height:110px;border-radius:50%;border:2px solid rgba(0,255,0,.3);background:rgba(0,30,0,.5);position:absolute;bottom:0;left:0;display:flex;align-items:center;justify-content:center}
+#joystick-knob{width:44px;height:44px;border-radius:50%;background:rgba(0,255,0,.5);border:2px solid rgba(0,255,0,.8);position:absolute;transition:none}
+#mobile-btns{position:absolute;bottom:16px;right:16px;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:all}
+#mobile-btns button{background:rgba(0,20,0,.8);border:1px solid rgba(0,255,0,.4);color:#0f0;font-family:'Courier New',monospace;font-size:13px;padding:10px 18px;border-radius:8px;cursor:pointer;letter-spacing:1px;min-width:70px}
+#btn-run{background:rgba(0,40,0,.85);font-size:12px}
+#btn-menu{font-size:16px;padding:10px 14px;min-width:auto}
+@media(pointer:coarse),(max-width:600px){#mobile-controls{display:block}}
+</style>
+
+<div id="gc">
+  <canvas id="cv"></canvas>
+
+  <!-- MENU INICIO -->
+  <div class="screen" id="screen-menu">
+    <div class="panel">
+      <h1>&#9762; BUNKER</h1>
+      <h2>POST-APOCALIPSIS &middot; PUZZLE FPS</h2>
+      <button class="btn" onclick="showLevels()">&#128506; NIVELES</button>
+      <button class="btn" onclick="showCharacters()">&#128100; PERSONAJES</button>
+      <button class="btn" onclick="showSettings()">&#9881; AJUSTES</button>
+      <div class="divider"></div>
+      <button class="btn" id="btn-toggle-enemies" onclick="toggleEnemies()" style="border-color:rgba(255,80,80,.5);color:#f88">&#128683; ENEMIGOS: ON</button>
+    </div>
+  </div>
+
+  <!-- NIVELES -->
+  <div class="screen" id="screen-levels" style="display:none">
+    <div class="panel">
+      <h3>&#128506; SELECCION DE NIVEL</h3>
+      <div class="divider"></div>
+      <button class="btn" onclick="startGame(1)">&#9654; NIVEL 1 &mdash; BUNKER</button>
+      <button class="btn" style="border-color:rgba(0,200,255,.4);color:#0cf" onclick="startGame(2)">&#9903; NIVEL 2 &mdash; LABORATORIO</button>
+      <div class="divider"></div>
+      <button class="btn btn-back" onclick="show('screen-menu')">&#8592; VOLVER AL MENU</button>
+    </div>
+  </div>
+
+  <!-- PERSONAJES -->
+  <div class="screen" id="screen-characters" style="display:none">
+    <div class="panel" style="max-width:440px">
+      <h3>👤 SELECCIÓN DE PERSONAJE</h3>
+      <div class="divider"></div>
+      <div style="display:flex;gap:12px;justify-content:center;margin:10px 0">
+
+        <div id="char-basic" onclick="selectChar('basic')" style="cursor:pointer;border:2px solid rgba(0,255,0,.8);background:rgba(0,255,0,.12);border-radius:10px;padding:14px 18px;flex:1;transition:.2s">
+          <div style="font-size:28px;margin-bottom:6px">🧑</div>
+          <div style="font-size:13px;font-weight:bold;letter-spacing:2px;color:#0f0">BASIC</div>
+          <div style="font-size:10px;color:rgba(0,255,0,.5);margin-top:4px">Modo estándar</div>
+        </div>
+
+        <div id="char-maria" onclick="selectChar('maria')" style="cursor:pointer;border:2px solid rgba(0,255,0,.2);border-radius:10px;padding:14px 18px;flex:1;transition:.2s">
+          <div style="font-size:28px;margin-bottom:6px">👩</div>
+          <div style="font-size:13px;font-weight:bold;letter-spacing:2px;color:#f0f">MARIA</div>
+          <div style="font-size:10px;color:rgba(255,0,255,.4);margin-top:4px">🔒 Acceso especial</div>
+        </div>
+
+      </div>
+
+      <div id="char-lockbox" style="display:none;margin:10px 0;background:rgba(0,0,0,.5);border:1px solid rgba(255,0,255,.3);border-radius:8px;padding:12px">
+        <div style="font-size:12px;color:#f0f;margin-bottom:8px;letter-spacing:1px">🔐 INTRODUCE LA CLAVE</div>
+        <input id="char-pass-input" type="password" onkeydown="if(event.key==='Enter')confirmCharPass()" style="background:#100010;border:1px solid rgba(255,0,255,.4);color:#f0f;padding:8px 12px;width:100%;border-radius:5px;font-family:monospace;font-size:15px;text-align:center;margin-bottom:8px" placeholder="••••••••"/>
+        <div style="display:flex;gap:6px;justify-content:center">
+          <button class="btn btn-sm" onclick="confirmCharPass()" style="border-color:rgba(255,0,255,.5);color:#f0f">[ CONFIRMAR ]</button>
+          <button class="btn btn-sm" onclick="document.getElementById('char-lockbox').style.display='none'">[ CANCELAR ]</button>
+        </div>
+        <div id="char-pass-fb" style="font-size:12px;color:#f44;margin-top:6px;min-height:16px"></div>
+      </div>
+
+      <div id="char-selected-lbl" style="font-size:12px;color:rgba(0,255,0,.6);margin:8px 0">&#9654; BASIC seleccionado</div>
+      <div class="divider"></div>
+      <button class="btn btn-back" onclick="backToMenu()">&#8592; VOLVER</button>
+      <button class="btn btn-back" id="btn-char-mainmenu" style="display:none" onclick="goToMainMenu()">&#8962; MENU PRINCIPAL</button>
+    </div>
+  </div>
+
+  <!-- AJUSTES -->
+  <div class="screen" id="screen-settings">
+    <div class="panel">
+      <h3>⚙ AJUSTES</h3>
+
+      <div class="divider"></div>
+      <div style="font-size:11px;color:rgba(0,255,0,.5);margin-bottom:10px;letter-spacing:1px">CONTROLES</div>
+      <table class="ctrl-table">
+        <tr><td>Mover adelante</td><td>W / ↑</td></tr>
+        <tr><td>Mover atrás</td><td>S / ↓</td></tr>
+        <tr><td>Desplazar izq.</td><td>A / ←</td></tr>
+        <tr><td>Desplazar der.</td><td>D / →</td></tr>
+        <tr><td>Girar cámara</td><td>Mouse</td></tr>
+        <tr><td>Correr</td><td>Shift (mantener)</td></tr>
+        <tr><td>Interactuar</td><td>E</td></tr>
+        <tr><td>Soltar ratón / Menú</td><td>ESC</td></tr>
+      </table>
+
+      <div class="divider"></div>
+      <div style="font-size:11px;color:rgba(0,255,0,.5);margin-bottom:12px;letter-spacing:1px">SENSIBILIDAD</div>
+
+      <div class="vol-row">
+        <label>Ratón</label>
+        <input type="range" min="1" max="10" value="5" step="1" id="sens-mouse" oninput="updateSens(this.value)">
+        <span id="lbl-sens">5</span>
+      </div>
+
+      <div class="divider"></div>
+      <div style="font-size:11px;color:rgba(0,255,0,.5);margin-bottom:12px;letter-spacing:1px">AUDIO</div>
+
+      <div class="vol-row">
+        <label>Música</label>
+        <input type="range" min="0" max="100" value="60" id="vol-music" oninput="updateVol('music',this.value)">
+        <span id="lbl-music">60%</span>
+      </div>
+      <div class="vol-row">
+        <label>Drones</label>
+        <input type="range" min="0" max="100" value="40" id="vol-drone" oninput="updateVol('drone',this.value)">
+        <span id="lbl-drone">40%</span>
+      </div>
+      <div class="vol-row">
+        <label>Ambiente</label>
+        <input type="range" min="0" max="100" value="25" id="vol-noise" oninput="updateVol('noise',this.value)">
+        <span id="lbl-noise">25%</span>
+      </div>
+      <div class="vol-row">
+        <label>Disparos / FX</label>
+        <input type="range" min="0" max="100" value="70" id="vol-fx" oninput="updateVol('fx',this.value)">
+        <span id="lbl-fx">70%</span>
+      </div>
+
+      <div class="divider"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" onclick="testAudio()">▶ Probar audio</button>
+        <button class="btn btn-sm" onclick="stopAudio()">■ Silenciar</button>
+      </div>
+
+      <div class="divider"></div>
+      <button class="btn btn-back" onclick="backToMenu()">← VOLVER AL MENÚ</button>
+    </div>
+  </div>
+
+  <!-- HUD JUEGO -->
+  <div id="hud">
+    <div id="top-hud">
+      <div>
+        <div class="badge" id="obj-lbl">🔍 OBJETIVO: Encuentra los 4 objetos</div>
+      </div>
+      <div style="text-align:right">
+        <div class="badge" id="items-lbl">Objetos: 0 / 4</div>
+        <div class="badge" id="hearts-lbl" style="margin-top:4px">❤️❤️❤️</div>
+        <div class="badge" style="margin-top:4px;font-size:10px;cursor:pointer;pointer-events:all" onclick="pauseToMenu()">⏸ MENÚ</div>
+      </div>
+    </div>
+    <div id="dmg-flash"></div>
+    <div id="crosshair"></div>
+    <div id="interact-hint">[E] Interactuar</div>
+    <div id="muzzle-flash"></div>
+    <div id="bot-hud">
+      <div>
+        <div style="font-size:10px;color:rgba(0,255,0,.5);margin-bottom:2px">STAMINA</div>
+        <div id="stam-bar"><div id="stam-fill" style="width:100%"></div></div>
+      </div>
+      <div class="badge" id="state-lbl">EN PIE</div>
+      <div class="badge" style="font-size:10px;color:rgba(0,255,0,.4)" id="mouse-lbl">CLIC → capturar ratón</div>
+    </div>
+  </div>
+
+  <!-- MOBILE CONTROLS -->
+  <div id="mobile-controls">
+    <div id="joystick-zone">
+      <div id="joystick-base"><div id="joystick-knob"></div></div>
+    </div>
+    <div id="mobile-btns">
+      <button id="btn-run" ontouchstart="player.running=player.stamina>15" ontouchend="player.running=false">⚡ CORRER</button>
+      <button id="btn-shoot" ontouchstart="mobileShoot()">🔫</button>
+      <button id="btn-interact" ontouchstart="mobileTapInteract()">[ E ]</button>
+      <button id="btn-menu" ontouchstart="pauseToMenu()">⏸</button>
+    </div>
+  </div>
+
+  <!-- PUZZLE -->
+  <div class="screen" id="screen-puzzle">
+    <div id="puzzle-box"></div>
+  </div>
+
+  <!-- WIN -->
+  <div class="screen" id="screen-win">
+    <div class="panel" id="win-panel">
+      <h1 style="font-size:18px">🎉 MISIÓN COMPLETADA</h1>
+      <p style="margin:14px 0;color:#0c0" id="win-msg">Has activado el generador y escapado del búnker.</p>
+      <p style="color:#0ff;margin-bottom:14px" id="win-sub">El exterior está en silencio...<br>demasiado silencio.</p>
+      <button class="btn" onclick="location.reload()">↩ JUGAR DE NUEVO</button>
+    </div>
+  </div>
+
+  <!-- PAUSA -->
+  <div class="screen" id="screen-pause">
+    <div class="panel" style="max-width:320px">
+      <h1 style="font-size:18px">⏸ PAUSADO</h1>
+      <div class="divider"></div>
+      <button class="btn" onclick="resumeGame()">▶ CONTINUAR</button>
+      <button class="btn" onclick="restartLevel()">↺ REINICIAR NIVEL</button>
+      <button class="btn" onclick="pauseToCharacters()">👤 CAMBIAR PERSONAJE</button>
+      <div class="divider"></div>
+      <button class="btn btn-back" onclick="goToMainMenu()">← MENÚ PRINCIPAL</button>
+    </div>
+  </div>
+
+  <!-- LOSE -->
+  <div class="screen" id="screen-lose">
+    <div class="panel">
+      <h1 style="font-size:18px;color:#f44">☠ HAS CAÍDO</h1>
+      <p style="margin:14px 0;color:#f88">Los mutantes del búnker te alcanzaron...</p>
+      <p style="color:#f44;margin-bottom:14px">Fin de la partida.</p>
+      <button class="btn" style="border-color:rgba(255,60,60,.5);color:#f66" onclick="location.reload()">↩ INTENTAR DE NUEVO</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const gc=document.getElementById('gc');
+const cv=document.getElementById('cv');
+const ctx=cv.getContext('2d');
+let W,H;
+function resize(){const r=gc.getBoundingClientRect();cv.width=W=r.width;cv.height=H=r.height;}
+resize();window.addEventListener('resize',resize);
+
+// ── SCREENS ──
+let gameStarted=false,gamePaused=false,selectedChar='basic',currentLevel=1;
+let enemiesEnabled=true;
+function toggleEnemies(){
+  enemiesEnabled=!enemiesEnabled;
+  const btn=document.getElementById('btn-toggle-enemies');
+  if(enemiesEnabled){
+    btn.textContent='\u{1F6AB} ENEMIGOS: ON';
+    btn.style.borderColor='rgba(255,80,80,.5)';
+    btn.style.color='#f88';
+  } else {
+    btn.textContent='\u2705 ENEMIGOS: OFF';
+    btn.style.borderColor='rgba(0,255,0,.4)';
+    btn.style.color='#0f0';
+  }
+}
+function show(id){['screen-menu','screen-settings','screen-characters','screen-puzzle','screen-win','screen-levels'].forEach(s=>{document.getElementById(s).style.display=s===id?'flex':'none';});}
+function showSettings(){show('screen-settings');}
+function showLevels(){show('screen-levels');}
+function showCharacters(){
+  document.getElementById('btn-char-mainmenu').style.display='none';
+  show('screen-characters');
+}
+function backToMenu(){
+  const charScreen=document.getElementById('screen-characters');
+  if(charScreen.dataset.fromPause==='1'){
+    charScreen.dataset.fromPause='';
+    charScreen.style.display='none';
+    document.getElementById('btn-char-mainmenu').style.display='none';
+    document.getElementById('screen-pause').style.display='flex';
+  } else {
+    show('screen-menu');
+  }
+}
+function pauseToCharacters(){
+  document.getElementById('screen-pause').style.display='none';
+  document.getElementById('btn-char-mainmenu').style.display='block';
+  document.getElementById('screen-characters').style.display='flex';
+  document.getElementById('screen-characters').dataset.fromPause='1';
+}
+function pauseToMenu(){
+  if(!gameStarted||gameOver||gameWon)return;
+  gamePaused=true;
+  if(mouseLocked)document.exitPointerLock();
+  ['screen-menu','screen-settings','screen-characters','screen-puzzle','screen-win','screen-lose'].forEach(s=>{
+    document.getElementById(s).style.display='none';
+  });
+  document.getElementById('screen-pause').style.display='flex';
+}
+function resumeGame(){
+  gamePaused=false;
+  document.getElementById('screen-pause').style.display='none';
+  document.getElementById('hud').style.display='block';
+}
+function restartLevel(){
+  document.getElementById('screen-pause').style.display='none';
+  gamePaused=false;
+  gameStarted=false; // force full re-init
+  startGame(currentLevel);
+}
+function goToMainMenu(){
+  gamePaused=false;gameStarted=false;
+  document.getElementById('screen-pause').style.display='none';
+  document.getElementById('hud').style.display='none';
+  document.getElementById('screen-menu').querySelector('h2').textContent='POST-APOCALIPSIS · PUZZLE FPS';
+  show('screen-menu');
+}
+function selectChar(name){
+  const fromPause=document.getElementById('screen-characters').dataset.fromPause==='1';
+  if(name==='maria'){
+    const box=document.getElementById('char-lockbox');
+    box.style.display='block';
+    document.getElementById('char-pass-input').value='';
+    document.getElementById('char-pass-fb').textContent='';
+    setTimeout(()=>document.getElementById('char-pass-input').focus(),80);
+  } else {
+    selectedChar='basic';
+    document.getElementById('char-basic').style.borderColor='rgba(0,255,0,.8)';
+    document.getElementById('char-basic').style.background='rgba(0,255,0,.12)';
+    document.getElementById('char-maria').style.borderColor='rgba(0,255,0,.2)';
+    document.getElementById('char-maria').style.background='transparent';
+    document.getElementById('char-selected-lbl').textContent='&#9654; BASIC seleccionado';
+    if(fromPause){
+      document.getElementById('screen-characters').dataset.fromPause='';
+      document.getElementById('btn-char-mainmenu').style.display='none';
+      document.getElementById('screen-characters').style.display='none';
+      gameStarted=false;gamePaused=false;
+      startGame(currentLevel);
+    }
+  }
+}
+function confirmCharPass(){
+  const v=document.getElementById('char-pass-input').value.trim();
+  const fromPause=document.getElementById('screen-characters').dataset.fromPause==='1';
+  if(v==='maria2025'){
+    selectedChar='maria';
+    document.getElementById('char-lockbox').style.display='none';
+    document.getElementById('char-maria').style.borderColor='rgba(255,0,255,.8)';
+    document.getElementById('char-maria').style.background='rgba(255,0,255,.1)';
+    document.getElementById('char-basic').style.borderColor='rgba(0,255,0,.2)';
+    document.getElementById('char-basic').style.background='transparent';
+    document.getElementById('char-selected-lbl').textContent='&#9654; MARIA seleccionada';
+    if(fromPause){
+      document.getElementById('screen-characters').dataset.fromPause='';
+      document.getElementById('btn-char-mainmenu').style.display='none';
+      document.getElementById('screen-characters').style.display='none';
+      gameStarted=false;gamePaused=false;
+      startGame(currentLevel);
+    }
+  } else {
+    document.getElementById('char-pass-fb').textContent='Clave incorrecta';
+  }
+}
+function startGame(level){
+  currentLevel=level||1;
+  if(!gameStarted){
+    gameStarted=true;initAudio();startAudio();
+  }
+  gameStarted=true;
+  // Seleccionar datos del nivel activo
+  const activePuzzleSet=currentLevel===2?PUZZLES_LAB:(selectedChar==='maria'?PUZZLES_MARIA:null);
+  const basePositions=PUZZLES.map(p=>({x:p.x,y:p.y}));
+  const content=activePuzzleSet?shuffle(activePuzzleSet):shuffle(PUZZLES.map(p=>({name:p.name,title:p.title,desc:p.desc,type:p.type,answer:p.answer,sequence:p.sequence,options:p.options,correct:p.correct,hint:p.hint,successMsg:p.successMsg})));
+  PUZZLES.forEach((p,i)=>{
+    Object.assign(p,content[i],{id:i,x:basePositions[i].x,y:basePositions[i].y,found:false,entered:[],selected:[]});
+  });
+  randomizeLayout();
+  itemsFound=0;allFound=false;gameWon=false;nearExit=false;
+  player.x=1.5;player.y=1.5;player.angle=0;
+  playerHearts=3;gameOver=false;lastHitTime=0;
+  document.getElementById('screen-lose').style.display='none';
+  updateHeartsUI();
+  document.getElementById('items-lbl').textContent='Objetos: 0 / 4';
+  document.getElementById('obj-lbl').textContent=currentLevel===2?'🔬 OBJETIVO: Encuentra los 4 muestras':'🔍 OBJETIVO: Encuentra los 4 objetos';
+  // Actualizar HUD color para nivel 2
+  const hud=document.getElementById('hud');
+  hud.style.color=currentLevel===2?'#0cf':'#0f0';
+  gamePaused=false;
+  document.getElementById('screen-menu').style.display='none';
+  document.getElementById('screen-levels').style.display='none';
+  document.getElementById('hud').style.display='block';
+  if(!loopRunning){loopRunning=true;requestAnimationFrame(loop);}
+}
+
+// ── AUDIO ──
+let audioCtx=null,droneGain=null,noiseGain=null,masterGain=null,fxGain=null;
+let pulseInterval=null,audioReady=false;
+let volMusic=0.6,volDrone=0.4,volNoise=0.25,volFx=0.7;
+
+function initAudio(){
+  if(audioCtx)return;
+  audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  masterGain=audioCtx.createGain();masterGain.gain.value=1;masterGain.connect(audioCtx.destination);
+  fxGain=audioCtx.createGain();fxGain.gain.value=volFx;fxGain.connect(masterGain);
+  droneGain=audioCtx.createGain();droneGain.gain.value=0;droneGain.connect(masterGain);
+  const freqs=[55,82.4,110,146.8];
+  freqs.forEach(f=>{
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    g.gain.value=0.045;o.type='sine';o.frequency.value=f;
+    o.connect(g);g.connect(droneGain);o.start();
+  });
+  const bufSize=audioCtx.sampleRate*2;
+  const buf=audioCtx.createBuffer(1,bufSize,audioCtx.sampleRate);
+  const d=buf.getChannelData(0);for(let i=0;i<bufSize;i++)d[i]=Math.random()*2-1;
+  const ns=audioCtx.createBufferSource();ns.buffer=buf;ns.loop=true;
+  const filt=audioCtx.createBiquadFilter();filt.type='lowpass';filt.frequency.value=220;
+  noiseGain=audioCtx.createGain();noiseGain.gain.value=0;
+  ns.connect(filt);filt.connect(noiseGain);noiseGain.connect(masterGain);ns.start();
+  audioReady=true;
+}
+
+function startAudio(){
+  if(!audioReady)return;
+  droneGain.gain.linearRampToValueAtTime(volDrone,audioCtx.currentTime+2);
+  noiseGain.gain.linearRampToValueAtTime(volNoise*.05,audioCtx.currentTime+2);
+  if(pulseInterval)clearInterval(pulseInterval);
+  pulseInterval=setInterval(()=>{
+    if(gamePaused||!audioReady)return;
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.type='sine';o.frequency.value=Math.random()<.5?110:73.4;
+    g.gain.setValueAtTime(0,audioCtx.currentTime);
+    g.gain.linearRampToValueAtTime(volMusic*.2,audioCtx.currentTime+.5);
+    g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+3);
+    o.connect(g);g.connect(masterGain);o.start();o.stop(audioCtx.currentTime+3.1);
+  },3000+Math.random()*2500);
+}
+
+function stopAudio(){
+  if(!audioReady)return;
+  droneGain.gain.linearRampToValueAtTime(0,audioCtx.currentTime+.5);
+  noiseGain.gain.linearRampToValueAtTime(0,audioCtx.currentTime+.5);
+  if(fxGain)fxGain.gain.linearRampToValueAtTime(0,audioCtx.currentTime+.1);
+  document.getElementById('vol-music').value=0;
+  document.getElementById('vol-drone').value=0;
+  document.getElementById('vol-noise').value=0;
+  document.getElementById('vol-fx').value=0;
+  document.getElementById('lbl-music').textContent='0%';
+  document.getElementById('lbl-drone').textContent='0%';
+  document.getElementById('lbl-noise').textContent='0%';
+  document.getElementById('lbl-fx').textContent='0%';
+  volMusic=0;volDrone=0;volNoise=0;volFx=0;
+}
+
+function testAudio(){initAudio();startAudio();}
+
+function playShootSound(){
+  if(!audioReady)return;
+  const t=audioCtx.currentTime;
+  // Capa 1: clic mecánico (ruido blanco muy corto con filtro bandpass)
+  const bufLen=audioCtx.sampleRate*0.08;
+  const buf=audioCtx.createBuffer(1,bufLen,audioCtx.sampleRate);
+  const data=buf.getChannelData(0);
+  for(let i=0;i<bufLen;i++)data[i]=(Math.random()*2-1)*(1-i/bufLen);
+  const ns=audioCtx.createBufferSource();ns.buffer=buf;
+  const bp=audioCtx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=1800;bp.Q.value=0.6;
+  const g=audioCtx.createGain();g.gain.setValueAtTime(0.55,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.08);
+  ns.connect(bp);bp.connect(g);g.connect(fxGain);ns.start(t);
+  // Capa 2: boom grave muy breve
+  const o=audioCtx.createOscillator();o.type='sine';
+  o.frequency.setValueAtTime(180,t);o.frequency.exponentialRampToValueAtTime(40,t+0.06);
+  const g2=audioCtx.createGain();g2.gain.setValueAtTime(0.4,t);g2.gain.exponentialRampToValueAtTime(0.001,t+0.07);
+  o.connect(g2);g2.connect(fxGain);o.start(t);o.stop(t+0.08);
+}
+
+function playHitSound(){
+  if(!audioReady)return;
+  const t=audioCtx.currentTime;
+  // Tono metálico descendente + distorsión corta
+  const o=audioCtx.createOscillator();o.type='sawtooth';
+  o.frequency.setValueAtTime(520,t);o.frequency.exponentialRampToValueAtTime(120,t+0.18);
+  const dist=audioCtx.createWaveShaper();
+  const curve=new Float32Array(256);
+  for(let i=0;i<256;i++){const x=i*2/256-1;curve[i]=x*(3+8*Math.abs(x))/(1+8*Math.abs(x));}
+  dist.curve=curve;
+  const g=audioCtx.createGain();g.gain.setValueAtTime(0.3,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.2);
+  o.connect(dist);dist.connect(g);g.connect(fxGain);o.start(t);o.stop(t+0.22);
+  // Chasquido de impacto
+  const bufLen2=Math.floor(audioCtx.sampleRate*0.04);
+  const buf2=audioCtx.createBuffer(1,bufLen2,audioCtx.sampleRate);
+  const d2=buf2.getChannelData(0);for(let i=0;i<bufLen2;i++)d2[i]=(Math.random()*2-1)*(1-i/bufLen2);
+  const ns2=audioCtx.createBufferSource();ns2.buffer=buf2;
+  const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=3000;
+  const g3=audioCtx.createGain();g3.gain.setValueAtTime(0.25,t);g3.gain.exponentialRampToValueAtTime(0.001,t+0.04);
+  ns2.connect(hp);hp.connect(g3);g3.connect(fxGain);ns2.start(t);
+}
+
+function updateVol(type,val){
+  const v=parseInt(val)/100;
+  if(type==='music'){volMusic=v;document.getElementById('lbl-music').textContent=val+'%';}
+  if(type==='drone'){volDrone=v;document.getElementById('lbl-drone').textContent=val+'%';if(audioReady)droneGain.gain.linearRampToValueAtTime(v,audioCtx.currentTime+.3);}
+  if(type==='noise'){volNoise=v;document.getElementById('lbl-noise').textContent=val+'%';if(audioReady)noiseGain.gain.linearRampToValueAtTime(v*.05,audioCtx.currentTime+.3);}
+  if(type==='fx'){volFx=v;document.getElementById('lbl-fx').textContent=val+'%';if(audioReady&&fxGain)fxGain.gain.linearRampToValueAtTime(v,audioCtx.currentTime+.1);}
+}
+
+function updateSens(val){mouseSens=parseInt(val)*0.0005;document.getElementById('lbl-sens').textContent=val;}
+
+// ── MOBILE TOUCH ──
+let joystickActive=false,joystickId=null,jBaseX=0,jBaseY=0;
+let lookActive=false,lookId=null,lastLookX=0;
+const jZone=document.getElementById('joystick-zone');
+const jKnob=document.getElementById('joystick-knob');
+const jBase=document.getElementById('joystick-base');
+const JMAX=32;
+function getJBaseCenter(){const r=jBase.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2};}
+jZone.addEventListener('touchstart',e=>{e.preventDefault();const t=e.changedTouches[0];joystickActive=true;joystickId=t.identifier;const c=getJBaseCenter();jBaseX=c.x;jBaseY=c.y;},{passive:false});
+document.addEventListener('touchmove',e=>{
+  for(const t of e.changedTouches){
+    if(t.identifier===joystickId&&joystickActive){
+      const dx=t.clientX-jBaseX,dy=t.clientY-jBaseY;
+      const d=Math.sqrt(dx*dx+dy*dy),cl=Math.min(d,JMAX);
+      const nx=d>0?dx/d:0,ny=d>0?dy/d:0;
+      jKnob.style.transform=`translate(${nx*cl-22}px,${ny*cl-22}px)`;
+      const r=cl/JMAX;
+      keys['w']=ny<-.3&&r>.2;keys['s']=ny>.3&&r>.2;
+      keys['a']=nx<-.3&&r>.2;keys['d']=nx>.3&&r>.2;
+    }
+    if(t.identifier===lookId&&lookActive){player.angle+=(t.clientX-lastLookX)*mouseSens*3;lastLookX=t.clientX;}
+  }
+},{passive:false});
+document.addEventListener('touchend',e=>{
+  for(const t of e.changedTouches){
+    if(t.identifier===joystickId){joystickActive=false;joystickId=null;jKnob.style.transform='translate(-22px,-22px)';keys['w']=keys['s']=keys['a']=keys['d']=false;}
+    if(t.identifier===lookId){lookActive=false;lookId=null;}
+  }
+});
+gc.addEventListener('touchstart',e=>{
+  for(const t of e.changedTouches){
+    const gcRect=gc.getBoundingClientRect();
+    if(!lookActive&&t.clientX-gcRect.left>gcRect.width*.4&&t.identifier!==joystickId){lookActive=true;lookId=t.identifier;lastLookX=t.clientX;}
+  }
+},{passive:true});
+function mobileTapInteract(){
+  if(activePuzzle||gamePaused)return;
+  let near=null;
+  PUZZLES.forEach(p=>{
+    if(p.found)return;
+    const dx=p.x-player.x,dy=p.y-player.y;
+    if(dist(player.x,player.y,p.x,p.y)>=1.8)return;
+    let a=Math.atan2(dy,dx)-player.angle;
+    while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;
+    if(Math.abs(a)<0.55)near=p;
+  });
+  if(near)openPuzzle(near);
+  if(allFound&&nearExit&&!gameWon)winGame();
+}
+
+const MAP=[
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,1,0,1,1,1,0,1,0,1,1,0,1,1,0,1,1,0,1],
+  [1,0,1,0,0,0,1,0,0,0,0,1,0,0,1,0,0,1,0,1],
+  [1,0,1,1,1,0,1,1,1,1,0,1,1,0,1,1,0,1,0,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,1,0,1,1,0,1,1,1,1,1,0,1,1,0,1,0,1,1],
+  [1,0,1,0,0,1,0,0,0,1,0,0,0,0,1,0,1,0,0,1],
+  [1,0,1,1,0,1,1,1,0,1,0,1,1,1,1,0,1,1,0,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,1,1,0,1,1,1,0,1,1,1,1,0,1,1,1,0,1,1,1],
+  [1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1],
+  [1,0,1,1,1,0,1,1,0,1,0,1,1,0,1,1,1,0,1,1],
+  [1,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0,1,0,0,1],
+  [1,1,1,0,1,1,0,1,1,1,1,0,1,1,1,0,1,1,0,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,1,1,0,1,0,1,1,0,1,1,0,1,0,1,1,0,1,1],
+  [1,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,1],
+  [1,0,0,0,1,1,0,0,0,0,0,0,0,1,1,0,0,0,0,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+];
+
+// ── MAPA NIVEL 2: LABORATORIO SECRETO ──
+// Pasillos amplios, salas cuadradas, estética de instalación científica
+const MAP2=[
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,1],
+  [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,1],
+  [1,0,0,1,1,0,1,0,0,1,1,1,0,0,1,0,1,1,0,1],
+  [1,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,1],
+  [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,1],
+  [1,1,1,0,0,1,1,1,0,0,1,0,0,1,1,1,0,0,1,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,0,1,0,0,0,0,0,1,1,0,0,0,0,0,1,0,0,1],
+  [1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1],
+  [1,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
+  [1,0,0,1,0,0,0,0,0,1,1,0,0,0,0,0,1,0,0,1],
+  [1,1,1,0,0,1,1,1,0,0,1,0,0,1,1,1,0,0,1,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,1,0,1],
+  [1,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1],
+  [1,0,1,1,0,0,1,1,0,0,1,0,0,1,1,0,0,1,1,1],
+  [1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+];
+
+let EXIT={x:18.5,y:18.5};
+const PUZZLES=[
+  {id:0,x:3.5,y:3.5,name:'Llave maestra',found:false,title:'TERMINAL DE ACCESO',
+   desc:'El panel pide un código.\nEn la pared hay grabado:\n"El año en que terminó la Segunda Guerra Mundial"',
+   type:'input',answer:'1945',hint:'Piensa en historia: ¿cuándo terminó la WWII?',
+   successMsg:'✅ CÓDIGO CORRECTO — Llave maestra obtenida'},
+  {id:1,x:15.5,y:3.5,name:'Código de acceso',found:false,title:'CAJA DE SEGURIDAD',
+   desc:'La caja tiene 3 botones: ROJO, AZUL, VERDE.\nLa nota dice:\n"Primero el cielo, luego la sangre, al final la naturaleza"',
+   type:'sequence',sequence:['AZUL','ROJO','VERDE'],entered:[],
+   hint:'El cielo es azul, la sangre es roja, la naturaleza es verde',
+   successMsg:'✅ SECUENCIA CORRECTA — Código de acceso obtenido'},
+  {id:2,x:3.5,y:15.5,name:'Batería de emergencia',found:false,title:'PANEL DE CABLES',
+   desc:'Cuatro cables: ROJO, AMARILLO, AZUL, VERDE.\nEl manual dice:\n"Conecta solo los que NO son colores primarios de luz (RGB)"',
+   type:'multi',options:['ROJO','AMARILLO','AZUL','VERDE'],correct:['AMARILLO'],selected:[],
+   hint:'Los colores primarios de luz son Rojo, Verde y Azul. ¿Cuál NO es primario?',
+   successMsg:'✅ CABLES CORRECTOS — Batería obtenida'},
+  {id:3,x:16.5,y:16.5,name:'Generador principal',found:false,title:'SALA DEL GENERADOR',
+   desc:'"Tengo ciudades pero no casas,\nmontañas pero no árboles,\nagua pero no peces.\n¿Qué soy?"',
+   type:'options',options:['Una pintura','Un mapa','Un espejo','Una fotografía'],correct:'Un mapa',
+   hint:'Tiene representaciones de lugares pero no los lugares reales',
+   successMsg:'🔋 GENERADOR ACTIVADO — Busca la SALIDA.'}
+];
+
+// ── PUZZLES NIVEL 2: LABORATORIO SECRETO ──
+const PUZZLES_LAB=[
+  {name:'Muestra Alfa',title:'TERMINAL BIOQUÍMICA',
+   desc:'El sistema pide la contraseña de acceso.\nEn la pared: "Número de elementos en la tabla periódica clásica de Mendeleev (1869)"',
+   type:'input',answer:'63',hint:'Mendeleev publicó su tabla en 1869 con 63 elementos conocidos entonces',
+   successMsg:'🧪 MUESTRA ALFA OBTENIDA — ADN sintético asegurado'},
+  {name:'Muestra Beta',title:'PANEL DE CONTENCIÓN',
+   desc:'Secuencia de descontaminación.\nInstrucción: "Primero neutralizar ácido, luego enfriar, finalmente ventilar"',
+   type:'sequence',sequence:['NEUTRALIZAR','ENFRIAR','VENTILAR'],entered:[],
+   hint:'Sigue el orden del protocolo: neutralizar → enfriar → ventilar',
+   successMsg:'❄️ CONTENCIÓN ESTABILIZADA — Muestra Beta asegurada'},
+  {name:'Muestra Gamma',title:'SELECTOR DE REACTIVOS',
+   desc:'El experimento necesita los gases NOBLES.\nSelecciona todos los gases nobles de la lista:',
+   type:'multi',options:['HELIO','NITRÓGENO','ARGÓN','OXÍGENO'],correct:['HELIO','ARGÓN'],selected:[],
+   hint:'Los gases nobles son los del grupo 18: He, Ne, Ar, Kr, Xe... El N₂ y O₂ no lo son',
+   successMsg:'⚗️ REACTIVOS CORRECTOS — Muestra Gamma extraída'},
+  {name:'Núcleo de datos',title:'SERVIDOR CENTRAL',
+   desc:'"Soy la velocidad de la luz en el vacío,\nuna constante que Einstein usó.\nMi valor aproximado en km/s es..."',
+   type:'options',options:['150,000 km/s','299,792 km/s','500,000 km/s','1,080 km/s'],correct:'299,792 km/s',
+   hint:'La velocidad de la luz es aproximadamente 300,000 km/s — elige el más preciso',
+   successMsg:'💾 NÚCLEO DE DATOS DESCARGADO — Activa el portal de escape'}
+];
+
+const PUZZLES_MARIA=[
+  {name:'Jugador favorito',title:'TERMINAL SECRETA',
+   desc:'¿Cuál es el jugador favorito de tu enamorado?',
+   type:'input',answer:'Messi',hint:'💡 Es el mejor del mundo, juega en Argentina y ganó el Mundial 2022',
+   successMsg:'⚽ ¡Correcto! ¡Messi siempre!'},
+  {name:'Cumpleaños especial',title:'CAJA DEL CORAZÓN',
+   desc:'¿Cuándo es el cumpleaños de tu enamorado?',
+   type:'input',answer:'11 de noviembre',hint:'💡 Es en noviembre, el undécimo mes del año',
+   successMsg:'🎂 ¡Correcto! Ese día es muy especial'},
+  {name:'Persona especial',title:'PANEL DEL AMOR',
+   desc:'¿Cuál es la persona que le gusta mucho a tu enamorado?',
+   type:'input',answer:'Maria',hint:'',
+   successMsg:'💜 ¡Así es! Esa persona eres tú'},
+  {name:'Fecha de enamorados',title:'SALA DEL RECUERDO',
+   desc:'¿Cuándo fue su fecha de enamorados?',
+   type:'input',answer:'02 de junio',hint:'',
+   successMsg:'💕 ¡Esa fecha quedará grabada para siempre!'}
+];
+
+function shuffle(arr){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+// genera posiciones válidas (suelo) lejos de paredes y del punto de inicio, con separación mínima entre ellas
+function randomizeLayout(){
+  const ACTIVE_MAP=currentLevel===2?MAP2:MAP;
+  // Nivel 2: más enemigos, más rápidos, más HP
+  const eCount=currentLevel===2?12:ENEMY_COUNT;
+  const eHp=currentLevel===2?4:ENEMY_HP;
+  const need=5+eCount;
+  const cells=[];
+  for(let y=1;y<19;y++)for(let x=1;x<19;x++){
+    if(ACTIVE_MAP[y][x]===0)cells.push({x:x+0.5,y:y+0.5});
+  }
+  const startPx=1.5,startPy=1.5;
+  const valid=shuffle(cells.filter(c=>dist(c.x,c.y,startPx,startPy)>3.5));
+  const chosen=[];
+  const MIN_SEP=3.2;
+  for(const c of valid){
+    if(chosen.every(o=>dist(o.x,o.y,c.x,c.y)>=MIN_SEP))chosen.push(c);
+    if(chosen.length>=need)break;
+  }
+  if(chosen.length<need){
+    for(const c of valid){
+      if(chosen.includes(c))continue;
+      if(chosen.every(o=>dist(o.x,o.y,c.x,c.y)>=1.8))chosen.push(c);
+      if(chosen.length>=need)break;
+    }
+  }
+  if(chosen.length<need){
+    for(const c of valid){if(!chosen.includes(c))chosen.push(c);if(chosen.length>=need)break;}
+  }
+  const positions=shuffle(chosen.slice(0,need));
+  PUZZLES.forEach((p,i)=>{p.x=positions[i].x;p.y=positions[i].y;});
+  EXIT.x=positions[4].x;EXIT.y=positions[4].y;
+  ENEMIES=[];
+  if(enemiesEnabled){
+    for(let i=0;i<eCount;i++){
+      const pos=positions[5+i];
+      if(!pos)continue;
+      ENEMIES.push({x:pos.x,y:pos.y,hp:eHp,maxHp:eHp,alive:true,lastAttack:0,flash:0,id:i,
+        speedMult:currentLevel===2?(0.8+Math.random()*0.6):1,
+        icon:currentLevel===2?(Math.random()<0.5?'🧬':'☣️'):'☠'});
+    }
+  }
+}
+
+let player={x:1.5,y:1.5,angle:0,running:false,stamina:100,bobPhase:0,speed:0};
+let keys={},mouseLocked=false,activePuzzle=null;
+let itemsFound=0,allFound=false,gameWon=false,nearExit=false;
+let flickerT=0,pulse=0,loopRunning=false;
+let mouseSens=0.0025;
+
+// ── COMBATE / ENEMIGOS ──
+const ENEMY_COUNT=9,ENEMY_HP=3,ENEMY_SPEED_WALK=0.020,ENEMY_SPEED_RUN=0.036,ENEMY_AGGRO_RANGE=8.5,ENEMY_MELEE_RANGE=0.45,ENEMY_ATTACK_COOLDOWN=1100,ENEMY_VISION_RANGE=10;
+let ENEMIES=[];
+let playerHearts=3,gameOver=false,lastHitTime=0;
+
+function dist(ax,ay,bx,by){return Math.sqrt((bx-ax)**2+(by-ay)**2);}
+
+// pointer lock
+gc.addEventListener('click',()=>{
+  if(activePuzzle||gamePaused||!gameStarted||gameOver||gameWon)return;
+  if(document.getElementById('screen-menu').style.display!=='none')return;
+  if(!mouseLocked){gc.requestPointerLock();return;}
+  shoot();
+});
+document.addEventListener('pointerlockchange',()=>{
+  const wasLocked=mouseLocked;
+  mouseLocked=document.pointerLockElement===gc;
+  document.getElementById('mouse-lbl').textContent=mouseLocked?'ESC → menú':'CLIC → capturar ratón';
+  document.getElementById('crosshair').style.display=mouseLocked?'block':'none';
+  // si el ratón estaba capturado y se liberó solo (el navegador libera el puntero con ESC
+  // antes de que llegue el evento de teclado), vamos directo al menú de pausa
+  if(wasLocked&&!mouseLocked&&gameStarted&&!gamePaused&&!activePuzzle&&!gameOver&&!gameWon&&document.getElementById('screen-pause').style.display==='none'){
+    pauseToMenu();
+  }
+});
+document.addEventListener('mousemove',e=>{if(mouseLocked&&!activePuzzle&&!gamePaused)player.angle+=e.movementX*mouseSens;});
+
+document.addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();keys[k]=true;
+  if(e.key==='Escape'&&gameStarted&&gamePaused&&document.getElementById('screen-pause').style.display==='flex'){e.preventDefault();resumeGame();return;}
+  if(e.key==='Escape'&&gameStarted&&!gamePaused&&!activePuzzle){e.preventDefault();pauseToMenu();return;}
+  if(e.key==='Shift')player.running=player.stamina>15;
+  if(['arrowup','arrowdown','arrowleft','arrowright'].includes(e.key))e.preventDefault();
+  if(e.key===' '&&!activePuzzle)e.preventDefault();
+  if(k==='e'&&!activePuzzle&&!gamePaused){
+    let near=null;
+    PUZZLES.forEach(p=>{
+      if(p.found)return;
+      const dx=p.x-player.x,dy=p.y-player.y;
+      if(dist(player.x,player.y,p.x,p.y)>=1.8)return;
+      let a=Math.atan2(dy,dx)-player.angle;
+      while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;
+      if(Math.abs(a)<0.55)near=p;
+    });
+    if(near)openPuzzle(near);
+    if(allFound&&nearExit&&!gameWon)winGame();
+  }
+});
+document.addEventListener('keyup',e=>{
+  const k=e.key.toLowerCase();keys[k]=false;
+  if(e.key==='Shift')player.running=false;
+});
+
+// ── RAYCASTER ──
+function castRayFrom(ox,oy,angle){
+  const ACTIVE_MAP=currentLevel===2?MAP2:MAP;
+  const rx=Math.cos(angle),ry=Math.sin(angle);
+  let x=ox,y=oy,step=0.015;
+  for(let d=step;d<22;d+=step){
+    x+=rx*step;y+=ry*step;
+    const mx=Math.floor(x),my=Math.floor(y);
+    if(mx<0||my<0||mx>=20||my>=20)return{d,side:0};
+    if(ACTIVE_MAP[my][mx]===1){const side=Math.abs(x-Math.round(x))<Math.abs(y-Math.round(y))?0:1;return{d,side};}
+  }
+  return{d:22,side:0};
+}
+function castRay(angle){return castRayFrom(player.x,player.y,angle);}
+
+function drawScene(){
+  if(gamePaused)return;
+  pulse+=0.025;flickerT-=16;
+  if(flickerT<0&&Math.random()<(currentLevel===2?.002:.004))flickerT=Math.random()*300+60;
+  const flick=flickerT>0;
+  const isLab=currentLevel===2;
+  const FOV=Math.PI/3,RAYS=Math.ceil(W/2);
+  const bobY=player.speed>0?Math.sin(player.bobPhase)*(player.running?7:3.5):0;
+  // Suelo y techo: búnker = verde oscuro, lab = azul muy oscuro con tono cian
+  ctx.fillStyle=isLab?(flick?'#000508':'#000c14'):( flick?'#020202':'#080808');
+  ctx.fillRect(0,0,W,H/2);
+  ctx.fillStyle=isLab?(flick?'#040404':'#0a0a0f'):(flick?'#060606':'#0e0e0e');
+  ctx.fillRect(0,H/2,W,H);
+  for(let i=0;i<RAYS;i++){
+    const ra=player.angle-FOV/2+(i/RAYS)*FOV;
+    const{d,side}=castRay(ra);
+    const cd=d*Math.cos(ra-player.angle);
+    const lh=Math.min(H/.85/cd,H);
+    const top=H/2-lh/2+bobY;
+    let br=Math.max(0,1-cd/12);
+    if(flick)br*=0.2+Math.random()*.5;else br*=0.88+Math.sin(pulse)*.06;
+    if(side===1)br*=0.55;
+    // Lab: paredes azul-cian metálico. Búnker: verde oscuro
+    if(isLab){
+      ctx.fillStyle=`rgba(${Math.floor(br*20)},${Math.floor(br*90)},${Math.floor(br*130)},1)`;
+    } else {
+      ctx.fillStyle=`rgba(${Math.floor(br*35)},${Math.floor(br*110)},${Math.floor(br*45)},1)`;
+    }
+    ctx.fillRect(i*2,top,2,lh);
+  }
+  const toDraw=[];
+  PUZZLES.forEach(p=>{
+    if(p.found)return;
+    const dx=p.x-player.x,dy=p.y-player.y,d2=Math.sqrt(dx*dx+dy*dy);
+    if(d2>7.5)return;
+    let a=Math.atan2(dy,dx)-player.angle;
+    while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;
+    if(Math.abs(a)>FOV/2+.1)return;
+    const wallD=castRay(player.angle+a).d;
+    if(wallD<d2-0.25)return;
+    toDraw.push({type:'item',a,d:d2,p});
+  });
+  if(allFound&&!gameWon){
+    const dx=EXIT.x-player.x,dy=EXIT.y-player.y,d2=Math.sqrt(dx*dx+dy*dy);
+    let aFacing=Math.atan2(dy,dx)-player.angle;
+    while(aFacing>Math.PI)aFacing-=2*Math.PI;while(aFacing<-Math.PI)aFacing+=2*Math.PI;
+    nearExit=d2<1.8&&Math.abs(aFacing)<0.55;
+    if(d2<7.5){let a=Math.atan2(dy,dx)-player.angle;while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;
+      if(Math.abs(a)<FOV/2+.1){const wallD=castRay(player.angle+a).d;if(wallD>=d2-0.25)toDraw.push({type:'exit',a,d:d2});}
+    }
+  }
+  ENEMIES.forEach(en=>{
+    if(!en.alive)return;
+    const dx=en.x-player.x,dy=en.y-player.y,d2=Math.sqrt(dx*dx+dy*dy);
+    if(d2>ENEMY_VISION_RANGE)return;
+    let a=Math.atan2(dy,dx)-player.angle;
+    while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;
+    if(Math.abs(a)>FOV/2+.15)return;
+    const wallD=castRay(player.angle+a).d;
+    if(wallD<d2-0.25)return;
+    toDraw.push({type:'enemy',a,d:d2,en});
+  });
+  toDraw.sort((a,b)=>b.d-a.d);
+  toDraw.forEach(obj=>{
+    const sx=(obj.a/(FOV/2)+1)/2*W;
+    const bY=player.speed>0?Math.sin(player.bobPhase)*(player.running?7:3.5):0;
+    if(obj.type==='item'){
+      // Lab: esferas de muestra en cian/violeta; Búnker: doradas
+      const p=obj.p,sz=Math.max(8,Math.min(70,H/obj.d*.45)),g=Math.sin(Date.now()*.005)*.35+.65;
+      const itemColor=isLab?'#00e5ff':'#ffd700';
+      const itemGlow=isLab?'#0ff':'#ff0';
+      const itemLabel=isLab?'⚗':'?';
+      ctx.save();ctx.globalAlpha=g*Math.min(1,(9-obj.d)/5);
+      ctx.fillStyle=itemColor;ctx.shadowBlur=12;ctx.shadowColor=itemGlow;
+      ctx.beginPath();ctx.arc(sx,H/2+bY,sz/2,0,Math.PI*2);ctx.fill();
+      ctx.shadowBlur=0;ctx.fillStyle='#000';ctx.font=`bold ${Math.floor(sz*.5)}px monospace`;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(itemLabel,sx,H/2+bY);
+      if(obj.d<1.8){ctx.globalAlpha=1;ctx.fillStyle=itemGlow;ctx.font='12px monospace';ctx.fillText('[E] '+p.name,sx,H/2-48+bY);}
+      ctx.restore();
+    } else if(obj.type==='enemy'){
+      const en=obj.en,sz=Math.max(10,Math.min(85,H/obj.d*.58)),flashing=en.flash>0;
+      // Lab: enemigos en violeta/magenta; Búnker: rojo
+      const eColor=isLab?(flashing?'#ffffff':'#cc44ff'):( flashing?'#ffffff':'#ff2222');
+      const eGlow=isLab?(flashing?'#fff':'#a000ff'):(flashing?'#fff':'#f00');
+      ctx.save();ctx.globalAlpha=Math.min(1,(ENEMY_VISION_RANGE-obj.d)/6);
+      ctx.fillStyle=eColor;ctx.shadowBlur=16;ctx.shadowColor=eGlow;
+      ctx.beginPath();ctx.arc(sx,H/2+bY,sz/2,0,Math.PI*2);ctx.fill();
+      ctx.shadowBlur=0;ctx.fillStyle='#000';ctx.font=`bold ${Math.floor(sz*.5)}px monospace`;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(en.icon||'☠',sx,H/2+bY);
+      const hbW=sz*0.9,hbY=H/2+bY-sz/2-11;
+      ctx.fillStyle='rgba(60,0,0,.8)';ctx.fillRect(sx-hbW/2,hbY,hbW,4);
+      ctx.fillStyle=isLab?'#0cf':'#0f0';ctx.fillRect(sx-hbW/2,hbY,hbW*(en.hp/en.maxHp),4);
+      ctx.restore();
+    } else {
+      // Salida: lab = portal naranja/magenta; búnker = cian
+      const exitColor=isLab?'#ff6600':'#00ffff';
+      const exitGlow=isLab?'#f80':'#0ff';
+      const exitLabel=isLab?'EXIT':'EXIT';
+      const sz=Math.max(12,Math.min(90,H/obj.d*.6)),g=Math.sin(Date.now()*.004)*.4+.6;
+      ctx.save();ctx.globalAlpha=g*Math.min(1,(10-obj.d)/5);
+      ctx.fillStyle=exitColor;ctx.shadowBlur=18;ctx.shadowColor=exitGlow;
+      ctx.beginPath();ctx.arc(sx,H/2+bY,sz/2,0,Math.PI*2);ctx.fill();
+      ctx.shadowBlur=0;ctx.fillStyle='#000';ctx.font=`bold ${Math.floor(sz*.38)}px monospace`;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(exitLabel,sx,H/2+bY);
+      if(obj.d<1.8){ctx.globalAlpha=1;ctx.fillStyle=exitGlow;ctx.font='12px monospace';ctx.fillText(isLab?'[E] PORTAL':'[E] SALIDA',sx,H/2-52+bY);}
+      ctx.restore();
+    }
+  });
+}
+
+// ── COMBATE ──
+function updateEnemies(){
+  if(!enemiesEnabled)return;
+  const now=Date.now();
+  ENEMIES.forEach(en=>{
+    if(!en.alive)return;
+    if(en.flash>0)en.flash--;
+    const dx=player.x-en.x,dy=player.y-en.y,d=Math.sqrt(dx*dx+dy*dy);
+    if(d>ENEMY_AGGRO_RANGE)return;
+    const ang=Math.atan2(dy,dx);
+    const wallD=castRayFrom(en.x,en.y,ang).d;
+    if(wallD<d-0.2)return; // no ve al jugador (pared de por medio)
+    if(d>ENEMY_MELEE_RANGE){
+      const espd=(player.running?ENEMY_SPEED_RUN:ENEMY_SPEED_WALK)*(en.speedMult||1);
+      const nx=en.x+Math.cos(ang)*espd,ny=en.y+Math.sin(ang)*espd;
+      const AM=currentLevel===2?MAP2:MAP;
+      if(AM[Math.floor(en.y)][Math.floor(nx)]!==1)en.x=nx;
+      if(AM[Math.floor(ny)][Math.floor(en.x)]!==1)en.y=ny;
+    } else if(now-en.lastAttack>ENEMY_ATTACK_COOLDOWN){
+      en.lastAttack=now;
+      damagePlayer();
+    }
+  });
+}
+
+function shoot(){
+  if(activePuzzle||gamePaused||gameWon||gameOver)return;
+  triggerMuzzleFlash();
+  playShootSound();
+  let target=null,bestD=Infinity;
+  ENEMIES.forEach(en=>{
+    if(!en.alive)return;
+    const dx=en.x-player.x,dy=en.y-player.y,d=Math.sqrt(dx*dx+dy*dy);
+    if(d>10)return;
+    let a=Math.atan2(dy,dx)-player.angle;
+    while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;
+    if(Math.abs(a)>0.1)return; // cono de puntería ajustado al centro de pantalla
+    const wallD=castRay(player.angle+a).d;
+    if(wallD<d-0.2)return; // bloqueado por una pared
+    if(d<bestD){bestD=d;target=en;}
+  });
+  if(target){
+    target.hp--;target.flash=8;
+    playHitSound();
+    if(target.hp<=0)target.alive=false;
+  }
+}
+
+function triggerMuzzleFlash(){
+  const f=document.getElementById('muzzle-flash');
+  if(!f)return;
+  f.style.transition='none';
+  f.style.opacity=1;f.style.transform='translate(-50%,-50%) scale(1)';
+  void f.offsetWidth; // reinicia la transición si se dispara rápido varias veces
+  f.style.transition='opacity .18s ease-out, transform .18s ease-out';
+  f.style.opacity=0;f.style.transform='translate(-50%,-50%) scale(1.6)';
+}
+
+function mobileShoot(){shoot();}
+
+function damagePlayer(){
+  if(gameOver||gameWon)return;
+  const now=Date.now();
+  if(now-lastHitTime<900)return; // breve invulnerabilidad tras recibir un golpe
+  lastHitTime=now;
+  playerHearts=Math.max(0,playerHearts-1);
+  updateHeartsUI();
+  flashDamage();
+  if(playerHearts<=0)loseGame();
+}
+
+function updateHeartsUI(){
+  const el=document.getElementById('hearts-lbl');
+  if(!el)return;
+  let s='';
+  for(let i=0;i<3;i++)s+=i<playerHearts?'❤️':'🖤';
+  el.textContent=s;
+}
+
+function flashDamage(){
+  const f=document.getElementById('dmg-flash');
+  if(!f)return;
+  f.style.opacity=1;
+  clearTimeout(window._dfT);
+  window._dfT=setTimeout(()=>{f.style.opacity=0;},180);
+}
+
+function loseGame(){
+  gameOver=true;
+  if(mouseLocked)document.exitPointerLock();
+  const msg=document.getElementById('screen-lose').querySelector('p');
+  if(msg)msg.textContent=currentLevel===2?'Los mutantes del laboratorio te contaminaron...':'Los mutantes del búnker te alcanzaron...';
+  document.getElementById('screen-lose').style.display='flex';
+}
+
+function update(){
+  if(activePuzzle||gamePaused||gameWon||gameOver)return;
+  updateEnemies();
+  const spd=player.running?.050:.026;
+  let mx=0,my=0,moved=false;
+  if(keys['w']||keys['arrowup']){mx+=Math.cos(player.angle)*spd;my+=Math.sin(player.angle)*spd;moved=true;}
+  if(keys['s']||keys['arrowdown']){mx-=Math.cos(player.angle)*spd*.6;my-=Math.sin(player.angle)*spd*.6;moved=true;}
+  if(keys['a']||keys['arrowleft']){mx+=Math.cos(player.angle-Math.PI/2)*spd*.7;my+=Math.sin(player.angle-Math.PI/2)*spd*.7;moved=true;}
+  if(keys['d']||keys['arrowright']){mx+=Math.cos(player.angle+Math.PI/2)*spd*.7;my+=Math.sin(player.angle+Math.PI/2)*spd*.7;moved=true;}
+  const nx=player.x+mx,ny=player.y+my;
+  const AM=currentLevel===2?MAP2:MAP;
+  if(AM[Math.floor(player.y)][Math.floor(nx)]!==1)player.x=nx;
+  if(AM[Math.floor(ny)][Math.floor(player.x)]!==1)player.y=ny;
+  player.speed=moved?1:0;
+  if(moved)player.bobPhase+=player.running?.19:.10;
+  if(player.running&&moved){player.stamina=Math.max(0,player.stamina-.35);if(!player.stamina)player.running=false;}
+  else player.stamina=Math.min(100,player.stamina+.18);
+  document.getElementById('stam-fill').style.width=player.stamina+'%';
+  document.getElementById('state-lbl').textContent=player.running?'🏃 CORRIENDO':'EN PIE';
+  let nearItem=null;
+  PUZZLES.forEach(p=>{
+    if(p.found)return;
+    const dx=p.x-player.x,dy=p.y-player.y,d2=dist(player.x,player.y,p.x,p.y);
+    if(d2>=1.8)return;
+    let a=Math.atan2(dy,dx)-player.angle;
+    while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;
+    if(Math.abs(a)<0.55)nearItem=p;
+  });
+  const ih=document.getElementById('interact-hint');
+  if(nearItem){ih.style.display='block';ih.textContent='[E] '+nearItem.name;}
+  else if(nearExit){ih.style.display='block';ih.textContent='[E] SALIDA DE EMERGENCIA';}
+  else ih.style.display='none';
+}
+
+// ── PUZZLE ──
+function openPuzzle(p){
+  activePuzzle=p;
+  if(mouseLocked)document.exitPointerLock();
+  const box=document.getElementById('puzzle-box');
+  const hintBtn=p.hint?`<button class="btn btn-sm" onclick="showHint(${p.id})">[ PISTA ]</button>`:'';
+  if(p.type==='input'){
+    const isMaria=selectedChar==='maria';
+    const inputColor=isMaria?'#200020':'#001500';
+    const borderColor=isMaria?'rgba(255,0,255,.3)':'#0f05';
+    const textColor=isMaria?'#f0f':'#0f0';
+    box.innerHTML=`<h2>${p.title}</h2><p>${p.desc.replace(/\n/g,'<br>')}</p>
+    <input id="pi" style="background:${inputColor};border:1px solid ${borderColor};color:${textColor};padding:8px 12px;width:100%;border-radius:5px;font-family:monospace;font-size:16px;text-align:center;margin-bottom:10px" placeholder="Escribe tu respuesta" onkeydown="if(event.key==='Enter')checkInput()"/>
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-top:6px">
+    <button class="btn btn-sm" onclick="checkInput()">[ CONFIRMAR ]</button>
+    ${hintBtn}
+    <button class="btn btn-sm" onclick="closePuzzle()">[ CANCELAR ]</button></div>
+    <div id="pfb" style="margin-top:10px;font-size:12px;min-height:18px"></div>`;
+    document.getElementById('screen-puzzle').style.display='flex';
+    setTimeout(()=>{const el=document.getElementById('pi');if(el)el.focus();},80);
+  } else if(p.type==='sequence'){
+    p.entered=[];renderSeq(p,box);document.getElementById('screen-puzzle').style.display='flex';
+  } else if(p.type==='multi'){
+    p.selected=[];renderMulti(p,box);document.getElementById('screen-puzzle').style.display='flex';
+  } else {
+    renderOpts(p,box);document.getElementById('screen-puzzle').style.display='flex';
+  }
+}
+function renderSeq(p,box){
+  box.innerHTML=`<h2>${p.title}</h2><p>${p.desc.replace(/\n/g,'<br>')}</p>
+  <div style="margin:8px 0;font-size:13px;color:#0c0">Secuencia: <span id="seq-e">${p.entered.join(' → ')||'—'}</span></div>
+  ${p.sequence.map(s=>`<button class="btn opt-btn" onclick="addSeq('${s}')">${s}</button>`).join('')}
+  <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-top:10px">
+  <button class="btn btn-sm" onclick="checkSeq()">[ CONFIRMAR ]</button>
+  <button class="btn btn-sm" onclick="showHint(${p.id})">[ PISTA ]</button>
+  <button class="btn btn-sm" onclick="closePuzzle()">[ CANCELAR ]</button></div>
+  <div id="pfb" style="margin-top:8px;font-size:12px;min-height:18px"></div>`;
+}
+function renderMulti(p,box){
+  box.innerHTML=`<h2>${p.title}</h2><p>${p.desc.replace(/\n/g,'<br>')}</p>
+  <p style="font-size:11px;color:rgba(0,255,0,.5)">Selecciona uno o más:</p>
+  ${p.options.map(o=>`<button class="btn opt-btn" id="mc-${o}" onclick="toggleMulti('${o}')">${o}</button>`).join('')}
+  <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-top:10px">
+  <button class="btn btn-sm" onclick="checkMulti()">[ CONFIRMAR ]</button>
+  <button class="btn btn-sm" onclick="showHint(${p.id})">[ PISTA ]</button>
+  <button class="btn btn-sm" onclick="closePuzzle()">[ CANCELAR ]</button></div>
+  <div id="pfb" style="margin-top:8px;font-size:12px;min-height:18px"></div>`;
+}
+function renderOpts(p,box){
+  box.innerHTML=`<h2>${p.title}</h2><p>${p.desc.replace(/\n/g,'<br>')}</p>
+  ${p.options.map(o=>`<button class="btn opt-btn" onclick="checkOpt('${o}')">${o}</button>`).join('')}
+  <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-top:10px">
+  <button class="btn btn-sm" onclick="showHint(${p.id})">[ PISTA ]</button>
+  <button class="btn btn-sm" onclick="closePuzzle()">[ CANCELAR ]</button></div>
+  <div id="pfb" style="margin-top:8px;font-size:12px;min-height:18px"></div>`;
+}
+function addSeq(v){const p=activePuzzle;if(p.entered.length>=p.sequence.length)p.entered=[];p.entered.push(v);document.getElementById('seq-e').textContent=p.entered.join(' → ');}
+function toggleMulti(v){const p=activePuzzle,i=p.selected.indexOf(v),btn=document.getElementById('mc-'+v);if(i===-1){p.selected.push(v);btn.style.background='rgba(0,255,0,.2)';btn.style.borderColor='rgba(0,255,0,.7)';}else{p.selected.splice(i,1);btn.style.background='';btn.style.borderColor='';}}
+function checkInput(){const v=(document.getElementById('pi').value||'').trim().toLowerCase();if(v===activePuzzle.answer.toLowerCase())puzzleSolved(activePuzzle);else fb('❌ Incorrecto. Intenta de nuevo.','#f44');}
+function checkSeq(){const p=activePuzzle;if(p.entered.length!==p.sequence.length){fb('❌ Faltan pasos.','#f44');return;}if(JSON.stringify(p.entered)===JSON.stringify(p.sequence))puzzleSolved(p);else{fb('❌ Secuencia incorrecta.','#f44');p.entered=[];document.getElementById('seq-e').textContent='—';}}
+function checkMulti(){const p=activePuzzle;if(JSON.stringify([...p.selected].sort())===JSON.stringify([...p.correct].sort()))puzzleSolved(p);else fb('❌ Selección incorrecta.','#f44');}
+function checkOpt(v){if(v===activePuzzle.correct)puzzleSolved(activePuzzle);else fb('❌ Incorrecto. Piensa bien...','#f44');}
+function showHint(id){fb('💡 PISTA: '+PUZZLES[id].hint,'#ff0');}
+function fb(msg,color){const el=document.getElementById('pfb');if(el){el.textContent=msg;el.style.color=color;}}
+
+function puzzleSolved(p){
+  p.found=true;itemsFound++;
+  document.getElementById('items-lbl').textContent=`Objetos: ${itemsFound} / 4`;
+  const box=document.getElementById('puzzle-box');
+  const isMaria=selectedChar==='maria';
+  if(itemsFound>=4){
+    allFound=true;
+    document.getElementById('obj-lbl').textContent='🚪 OBJETIVO: ¡Encuentra la SALIDA!';
+    box.innerHTML=`<h2>${isMaria?'💜':'✅'} ${p.name.toUpperCase()}</h2><p>${p.successMsg}</p>
+    <p style="color:${isMaria?'#f0f':'#0ff'};font-size:14px">¡TODOS LOS OBJETOS!<br>Busca la <strong>SALIDA</strong> (esfera CYAN).</p>
+    <button class="btn btn-sm" onclick="closePuzzle()">[ CONTINUAR ]</button>`;
+  } else {
+    box.innerHTML=`<h2>${isMaria?'💜':'✅'} RESUELTO</h2><p>${p.successMsg}</p>
+    <p style="font-size:12px;color:rgba(${isMaria?'255,0,255':'0,255,0'},.5)">${itemsFound}/4 objetos encontrados</p>
+    <button class="btn btn-sm" onclick="closePuzzle()">[ CONTINUAR ]</button>`;
+  }
+}
+function closePuzzle(){activePuzzle=null;document.getElementById('screen-puzzle').style.display='none';}
+
+function winGame(){
+  gameWon=true;if(mouseLocked)document.exitPointerLock();
+  if(currentLevel===2){
+    document.getElementById('win-msg').textContent='Has recuperado las muestras y escapado del laboratorio secreto.';
+    document.getElementById('win-sub').innerHTML='Los científicos mutantes quedan atrás...<br>pero el experimento ya fue iniciado.';
+    document.getElementById('win-panel').style.borderColor='rgba(0,200,255,.4)';
+    document.getElementById('win-panel').querySelector('h1').textContent='🧬 EXPERIMENTO COMPLETADO';
+  } else {
+    document.getElementById('win-msg').textContent='Has activado el generador y escapado del búnker.';
+    document.getElementById('win-sub').innerHTML='El exterior está en silencio...<br>demasiado silencio.';
+    document.getElementById('win-panel').style.borderColor='rgba(0,255,0,.25)';
+    document.getElementById('win-panel').querySelector('h1').textContent='🎉 MISIÓN COMPLETADA';
+  }
+  document.getElementById('screen-win').style.display='flex';
+}
+
+function loop(){update();drawScene();requestAnimationFrame(loop);}
+</script>
